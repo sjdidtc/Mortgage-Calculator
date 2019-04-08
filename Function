@@ -42,3 +42,39 @@ update_mrg <- function(AllMdata, Mrate, EarlyPay = NULL, Month){
     Principal = new_Principal_seq
   )
 }
+
+# data example
+rate = 0.0325
+Mrate = (1+rate)^(1/12)-1
+TtlPrin = 414000
+n=180
+M = morgage_cal(TtlPrin, rate, n/12)
+Prcp <- rev(exp_seq(M/(1+Mrate), 1/(1+Mrate), n)) #%>% sum()
+
+Prcp_cum <- cumsum(Prcp)
+
+AllMdata <- data.frame(Remain = TtlPrin-c(0,Prcp_cum[1:(n-1)]),
+                       Time = 1:n
+) %>%
+  mutate(
+    Interest = Remain*Mrate,
+    Principal = M-Interest
+  ) #
+
+ggplot(AllMdata %>% gather("Portional", "Amount", -Remain, - Time),
+       aes(x = Time, y = Amount, fill = Portional)) +
+  geom_bar(stat="identity") #+
+# geom_line(aes(x = rep(1:n,2),
+#               y = rep(TtlPrin-c(0,Prcp_cum[1:(n-1)]),2)), color = 'blue',stat="identity")
+
+
+
+AllMdata_new <- update_mrg(AllMdata, Mrate, EarlyPay = 100000, 36)
+AllMdata_new <- update_mrg(AllMdata_new, Mrate, EarlyPay = 50000, 72)
+
+ggplot(AllMdata_new %>% gather("Portional", "Amount", -Remain, - Time),
+       aes(x = Time, y = Amount, fill = Portional)) +
+  geom_bar(stat="identity")
+sum(AllMdata_new$Interest)
+sum(AllMdata$Interest)
+nrow(AllMdata_new)
