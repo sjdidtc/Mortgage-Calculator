@@ -1,0 +1,44 @@
+library(ggplot2)
+#function
+# Mor cal ---
+morgage_cal <- function(principal, Anualrate, year){
+  # monthrate = Anualrate/12
+  monthrate = (1+Anualrate)^(1/12)-1
+  N = year*12
+  principal*(monthrate+1)^N*monthrate/((1+monthrate)^N-1)
+}
+
+# expo seq ---
+exp_seq <- function(start, exp, n){
+  seq = c(start)
+  for(i in 1:(n-1)){
+    seq <- append(seq, seq[i]*exp)
+  }
+  seq
+}
+
+# update mortgage if early pay
+update_mrg <- function(AllMdata, Mrate, EarlyPay = NULL, Month){
+  M = AllMdata$Interest[nrow(AllMdata)] + AllMdata$Principal[nrow(AllMdata)]
+  new_remain_seq <- AllMdata$Remain[1:Month]
+  new_Interest_seq <- AllMdata$Interest[1:Month]
+  new_Principal_seq <- AllMdata$Principal[1:Month]
+  new_Time_seq <- AllMdata$Time[1:Month]
+
+  Remain = new_remain_seq[Month] - new_Principal_seq[Month] - EarlyPay
+  while (Remain >0) {
+    intst = Remain*Mrate
+    prcp = M - intst
+    Remain = Remain - prcp
+
+    new_remain_seq = append(new_remain_seq, Remain)
+    new_Principal_seq = append(new_Principal_seq, prcp)
+    new_Interest_seq = append(new_Interest_seq, intst)
+  }
+  data.frame(
+    Remain = new_remain_seq,
+    Time = 1:length(new_remain_seq),
+    Interest = new_Interest_seq,
+    Principal = new_Principal_seq
+  )
+}
